@@ -1,0 +1,59 @@
+<html>
+<body>
+<button id='print'>Print</button>
+<pre id='info'></pre>
+<pre id='tokens'></pre>
+<script src="/nuron.js"></script>
+
+<script>
+const nuron = new Nuron({
+  nuron: "https://nuronpress.papercorp.org",
+  key: "m'/44'/60'/0'/0/0",
+  workspace: "test",
+  domain: {
+    "address": "0x70e6a81d4c3a910a686c5f806899c9b39e9a9c93",
+    "chainId": 4,
+    "name": "Excited Ape Ferry Club"
+  }
+})
+fetch("https://nuronpress.papercorp.org/wallet/accounts", {
+  credentials: "include"
+}).then((r) => {
+  return r.json()
+}).then((r) => {
+  console.log(r)
+})
+const create = async () => {
+  for(let i=0; i<10; i++) {
+    document.querySelector("#info").innerHTML = i 
+    let metadata_cid = await nuron.fs.write({
+      name: `${i}`,
+      description: `${i}.svg`,
+    })
+
+    ////////////////////////////////////////////////////
+    //
+    // 2. CREATE A TOKEN AND WRITE TO NURON
+    //
+    ////////////////////////////////////////////////////
+
+    // 2.1. Create a token from the metadata cid
+    let token = await nuron.token.create({
+      cid: metadata_cid
+    })
+
+    // 2.2. Write the token to the DB ("token" table)
+    await nuron.db.write("token", token)
+
+    // 2.3. Write the token to the file system
+    await nuron.fs.write(token)
+
+    document.querySelector("#tokens").innerHTML += ("\n" + JSON.stringify(token, null, 2))
+  }
+}
+document.querySelector("#print").addEventListener("click", async (e) => {
+  await create()
+})
+</script>
+</body>
+</html>
